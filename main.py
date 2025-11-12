@@ -77,6 +77,24 @@ def cmd_transfer(categories, args):
     ok = c_from.transfer(amt, c_to)
     print("✅ Transfer complete" if ok else "❌ Transfer failed (insufficient funds)")
 
+def cmd_withdraw(categories, args):
+    if len(args) < 3:
+        print("Usage: budget withdraw <Category> <amount> <description...>")
+        return
+    category = args[0]
+    amount = float(args[1])
+    description = " ".join(args[2:])
+    cat = find_category(categories, category)
+    if not cat:
+        print(f"❌ Category '{category}' not found")
+        return
+
+    if cat.withdraw(amount, description):
+        print(f"💸 Withdrawn {amount} from {category}: {description}")
+    else:
+        print("❌ Withdrawal failed (insufficient funds)")
+
+
 def cmd_show(categories, args):
     """
     budget show           -> print chart
@@ -109,6 +127,7 @@ def main():
         print("  budget transfer <From> <To> <amount>")
         print("  budget show [Category]")
         print("  budget report")
+        print("  withdraw <Category> <amount> <description>")
         sys.exit(0)
 
     categories = load_categories_from_s3()
@@ -124,6 +143,8 @@ def main():
         cmd_show(categories, args)
     elif cmd == "report":
         cmd_report(categories, args)
+    elif cmd == "withdraw":
+        cmd_withdraw(categories, args)
     else:
         print("Unknown command.")
         sys.exit(1)
@@ -135,3 +156,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
