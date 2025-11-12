@@ -91,7 +91,7 @@ s3://elis-budget-tracker-123456/reports/2025-11-12.json
 
 > All S3 objects are encrypted (SSE-S3) and versioned.
 IAM roles follow the principle of least privilege (s3:GetObject, s3:PutObject, s3:ListBucket).
-{: .prompt-tip }
+
 
 🧑‍💻 Author
 
