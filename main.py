@@ -11,6 +11,8 @@ from budget_app import Category, create_spend_chart  # import our budget app cod
 BUCKET = os.environ.get("BUDGET_BUCKET", "elis-budget-tracker-REPLACE")
 LEDGER_KEY = os.environ.get("LEDGER_KEY", "data/ledger.json")
 
+
+
 def load_categories_from_s3():
     raw = load_json(BUCKET, LEDGER_KEY, default={"categories": []})
     cats = [Category.from_dict(c) for c in raw.get("categories", [])]
@@ -27,6 +29,12 @@ def ensure_category(categories, name):
     c = Category(name)
     categories.append(c)
     return c
+
+def find_category(categories, name):
+    for c in categories:
+        if c.category == name:
+            return c
+    return None
 
 def summarize(categories):
     by_cat_spend = defaultdict(float)
@@ -78,6 +86,7 @@ def cmd_transfer(categories, args):
     print("✅ Transfer complete" if ok else "❌ Transfer failed (insufficient funds)")
 
 def cmd_withdraw(categories, args):
+
     if len(args) < 3:
         print("Usage: budget withdraw <Category> <amount> <description...>")
         return
@@ -85,6 +94,7 @@ def cmd_withdraw(categories, args):
     amount = float(args[1])
     description = " ".join(args[2:])
     cat = find_category(categories, category)
+
     if not cat:
         print(f"❌ Category '{category}' not found")
         return
@@ -150,9 +160,10 @@ def main():
         sys.exit(1)
 
     # persist on any mutating command
-    if cmd in ("add", "transfer"):
+    if cmd in ("add", "transfer", "withdraw"):
         uri = save_categories_to_s3(categories)
         print(f"☁️  Synced ledger to: {uri}")
+
 
 if __name__ == "__main__":
     main()
