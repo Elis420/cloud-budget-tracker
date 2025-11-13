@@ -11,11 +11,6 @@ class Category:
         output = header
         total =  f'{self.balance:.2f}'
 
-        if len(header) < 30: 
-            header = f"*{header}" 
-        else: 
-            None
-
         for i in self.ledger:
             limited_desc = (i["description"])[0:23]
             amount = i["amount"]
@@ -83,95 +78,82 @@ class Category:
 
 
 def create_spend_chart(categories):
-    total_spent = 0
-    spendings_list = {}
-    perc_list = {}
-    output = 'Percentage spent by category'
-    hundred = "100| "
-    ninety = " 90| "
-    eighty = " 80| "
-    seventy = " 70| "
-    sixty = " 60| "
-    fifty = " 50| "
-    fourty = " 40| "
-    thirty = " 30| "
-    twenty = " 20| "
-    ten = " 10| "
-    zero = "  0| "
-    dashes = "-"
-    
-    list_of_categories = []
+    """
+    Build an ASCII chart like:
 
-    for i in categories:
-        list_of_categories.append(i.category)
-    longest = len(max(list_of_categories, key=len))
+    Percentage spent by category
+    100|          
+     90|          
+     80|          
+     70|          
+     60| o        
+     50| o        
+     40| o        
+     30| o  o     
+     20| o  o     
+     10| o  o     
+      0| o  o     
+         ----------
+          F  E
+          o  n
+          o  t
+          d  e
+             r
+             t
+             a
+             i
+             n
+             m
+             e
+             n
+             t
+    """
+    # 1. How much was spent (negative amounts) in each category?
+    spent_per_cat = []
+    names = []
+    for c in categories:
+        names.append(c.category)
+        spent = 0
+        for entry in c.ledger:
+            amt = entry["amount"]
+            if amt < 0:
+                spent += -amt
+        spent_per_cat.append(spent)
 
-    
+    total_spent = sum(spent_per_cat)
+    if total_spent == 0:
+        return "Percentage spent by category\n\n(no spending recorded yet)"
 
+    # 2. Convert to percentages, rounded DOWN to the nearest 10
+    percents = [
+        int((spent / total_spent * 100) // 10 * 10) for spent in spent_per_cat
+    ]
 
-    graph = [zero,ten,twenty,thirty,fourty,fifty,sixty,seventy,eighty,ninety,hundred]
-    
+    # 3. Build chart rows from 100 down to 0
+    lines = ["Percentage spent by category"]
+    for level in range(100, -1, -10):
+        line = f"{level:>3}| "
+        for p in percents:
+            line += "o  " if p >= level else "   "
+        lines.append(line)
 
-    for i in categories:
-        name = i.category
-        spendings_list[name] = 0
-        perc_list[name] = 0
-        for i in i.ledger:
-            amount = i["amount"]
-            if amount < 0:
-                total_spent += -amount
-                spendings_list[name]+=-amount
+    # 4. Add the horizontal line
+    lines.append("    " + "-" * (len(categories) * 3 + 1))
+
+    # 5. Add the category names vertically
+    max_len = max(len(name) for name in names) if names else 0
+    for i in range(max_len):
+        line = "     "
+        for name in names:
+            if i < len(name):
+                line += name[i] + "  "
             else:
-                continue
+                line += "   "
+        lines.append(line.rstrip())
+
+    return "\n".join(lines)
 
 
-    for i in perc_list:
-        perc_list[i] = (spendings_list[i]/total_spent)*100
-        perc_list[i] = round(perc_list[i])
-        counter = 0
-        current = perc_list[i]
-        dashes += "---"
-
-        
-
-        for num in range(0,11):
-            if counter == 0:
-                graph[num] += "o  "
-                
-            else:
-                if current == 0:
-                    graph[num] += "   "
-                else:
-                    if (counter/current) <= 1:
-                        graph[num] += "o  "  
-                    else:
-                        graph[num] += "   "
-            counter +=10
-
-    for num in range(10,-1,-1):
-        output += f'\n{graph[num]}'
-
-    output += "\n    " + dashes
-    
-
-
-    for num in range(0,longest):
-            output+= "\n     "
-            for cat in list_of_categories:
-                if num >= len(cat):
-                    output+="   "
-                    continue
-                else: 
-                    output+=cat[num] + "  "
- 
-    return output
-
-
-# Rounding Up percentages
-def round(n):
-
-    a = (n//10)*10
-    return a
 
 
 
